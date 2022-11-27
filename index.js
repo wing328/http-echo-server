@@ -15,6 +15,9 @@ onEmit(server, { ignore: ['connection', 'listening', 'error'] }, function (event
 server.on('connection', function (c) {
   var gotData = false
   var _cid = ++cid
+  var firstLine = true
+  var echoMode = false // echo back the HTTP request body
+  var foundHttpRequestBody = false
 
   console.log('[server] event: connection (socket#%d)', _cid)
 
@@ -31,8 +34,20 @@ server.on('connection', function (c) {
   })
 
   c.on('data', function (chunk) {
+    if (firstLine) {
+      // e.g. POST /data HTTP/1.1
+      var firstLineItems = chunk.toString().split(' ')
+      if (firstLineItems[1].startsWith('/echo/')) {
+        console.debug('Echo mode switched on for this request')
+        echoMode = true
+      }
+
+      // console.debug('First line found: ' + chunk.toString().split('\n').join('\n--> '))
+      firstLine = false
+    }
+
     console.log('--> ' + chunk.toString().split('\n').join('\n--> '))
-    if (!gotData) {
+    if (!gotData && !echoMode) { // starts the reply e.g. headers, etc
       gotData = true
       c.write('HTTP/1.1 200 OK\r\n')
       c.write('Date: ' + (new Date()).toString() + '\r\n')
@@ -44,7 +59,43 @@ server.on('connection', function (c) {
         c.end()
       }, 2000)
     }
-    c.write(chunk.toString())
+
+    if (echoMode) {
+      var lines = chunk.toString().split('\n')
+      for (const line of lines) {
+        if (/^content-type/i.test(line)) {
+          var contentType = line.split(' ')[1]
+          console.debug('Found the content-type: ' + line.split(' ')[1])
+          if (!gotData) {
+            gotData = true
+            c.write('HTTP/1.1 200 OK\r\n')
+            c.write('Date: ' + (new Date()).toString() + '\r\n')
+            c.write('Connection: close\r\n')
+            c.write('Content-Type: ' + contentType + '\r\n')
+            c.write('Access-Control-Allow-Origin: *\r\n')
+            c.write('\r\n')
+            setTimeout(function () {
+              c.end()
+            }, 2000)
+          }
+        }
+
+        if (line.localeCompare('\r') === 0) { // a blank line
+          foundHttpRequestBody = true
+          console.debug('Found the blank line before the response body')
+          continue
+        } else {
+          // console.debug("blank line not match: [" + line + "]")
+        }
+        if (foundHttpRequestBody) {
+          c.write(line)
+        }
+      }
+      // console.debug("End of echo mode")
+    } else {
+      c.write(chunk.toString())
+      // c.write("DONE")
+    }
   })
 
   c.on('error', function (err) {
@@ -54,7 +105,7 @@ server.on('connection', function (c) {
 
 server.on('listening', function () {
   var port = server.address().port
-  console.log('[server] event: listening (port: %d)', port)
+  console.log('[server] event: listening ...... (port: %d)', port)
 })
 
 server.on('error', function (err) {
