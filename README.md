@@ -65,6 +65,16 @@ export PORT=3005
 http-echo-server
 ```
 
+### Echo Mode
+
+For path starting with `/echo/`, the response body is exactly the same as the request body, e.g.
+
+```sh
+$ curl -d '{"key1":"value1", "key2":"value2"}' -H "Content-Type: application/json" -X POST http://localhost:3000/echo/data
+
+{"key1":"value1", "key2":"value2"}% 
+```
+
 ## License
 
 [MIT](LICENSE)
