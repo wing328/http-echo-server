@@ -17,6 +17,8 @@ server.on('connection', function (c) {
   var _cid = ++cid
   var firstLine = true
   var echoMode = false // echo back the HTTP request body
+  var binaryMode = false // binary mode
+  var binaryModeUrl = "" // binary mode URL
   var foundHttpRequestBody = false
 
   console.log('[server] event: connection (socket#%d)', _cid)
@@ -40,6 +42,10 @@ server.on('connection', function (c) {
       if (firstLineItems[1].startsWith('/echo/')) {
         console.debug('Echo mode switched on for this request')
         echoMode = true
+      } else if (firstLineItems[1].startsWith('/binary/')) {
+        console.debug('Binary mode switched on for this request')
+        binaryMode = true
+        binaryModeUrl = firstLineItems[1]
       }
 
       // console.debug('First line found: ' + chunk.toString().split('\n').join('\n--> '))
@@ -47,7 +53,7 @@ server.on('connection', function (c) {
     }
 
     console.log('--> ' + chunk.toString().split('\n').join('\n--> '))
-    if (!gotData && !echoMode) { // starts the reply e.g. headers, etc
+    if (!gotData && !echoMode && !binaryMode) { // starts the reply e.g. headers, etc
       gotData = true
       c.write('HTTP/1.1 200 OK\r\n')
       c.write('Date: ' + (new Date()).toString() + '\r\n')
@@ -59,6 +65,7 @@ server.on('connection', function (c) {
         c.end()
       }, 2000)
     }
+
 
     if (echoMode) {
       var lines = chunk.toString().split('\n')
@@ -92,6 +99,24 @@ server.on('connection', function (c) {
         }
       }
       // console.debug("End of echo mode")
+    } else if (binaryMode) {
+        if (binaryModeUrl === "/binary/gif") {
+            var b64string = 'R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
+            var buf = Buffer.from(b64string, 'base64');
+            c.write('HTTP/1.1 200 OK\r\n')
+            c.write('Date: ' + (new Date()).toString() + '\r\n')
+            c.write('Connection: close\r\n')
+            c.write('Content-Type: image/gif\r\n')
+            c.write('Access-Control-Allow-Origin: *\r\n')
+            c.write('\r\n')
+            c.write(buf)
+            setTimeout(function () {
+                c.end()
+            }, 2000)
+        } else {
+            // not yet support other binary type:
+            console.log('[socket#%d] event: error (msg: %s)', _cid, "only image/gif supported at the moment")
+        }
     } else {
       c.write(chunk.toString())
       // c.write("DONE")
