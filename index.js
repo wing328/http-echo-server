@@ -95,6 +95,7 @@ server.on('connection', function (c) {
           // console.debug("blank line not match: [" + line + "]")
         }
         if (foundHttpRequestBody) {
+          //console.debug('<-- ' + line);
           c.write(line)
         }
       }
