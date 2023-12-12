@@ -55,12 +55,12 @@ server.on('connection', function (c) {
     console.log('--> ' + chunk.toString().split('\n').join('\n--> '))
     if (!gotData && !echoMode && !binaryMode) { // starts the reply e.g. headers, etc
       gotData = true
-      c.write('HTTP/1.1 200 OK\r\n')
-      c.write('Date: ' + (new Date()).toString() + '\r\n')
-      c.write('Connection: close\r\n')
-      c.write('Content-Type: text/plain\r\n')
-      c.write('Access-Control-Allow-Origin: *\r\n')
-      c.write('\r\n')
+      c.write('HTTP/1.1 200 OK\n')
+      c.write('Date: ' + (new Date()).toString() + '\n')
+      c.write('Connection: close\n')
+      c.write('Content-Type: text/plain\n')
+      c.write('Access-Control-Allow-Origin: *\n')
+      c.write('\n')
       setTimeout(function () {
         c.end()
       }, 2000)
@@ -75,19 +75,19 @@ server.on('connection', function (c) {
           console.debug('Found the content-type: ' + line.split(' ')[1])
           if (!gotData) {
             gotData = true
-            c.write('HTTP/1.1 200 OK\r\n')
-            c.write('Date: ' + (new Date()).toString() + '\r\n')
-            c.write('Connection: close\r\n')
-            c.write('Content-Type: ' + contentType + '\r\n')
-            c.write('Access-Control-Allow-Origin: *\r\n')
-            c.write('\r\n')
+            c.write('HTTP/1.1 200 OK\n')
+            c.write('Date: ' + (new Date()).toString() + '\n')
+            c.write('Connection: close\n')
+            c.write('Content-Type: ' + contentType + '\n')
+            c.write('Access-Control-Allow-Origin: *\n')
+            c.write('\n')
             setTimeout(function () {
               c.end()
             }, 2000)
           }
         }
 
-        if (line.localeCompare('\r') === 0) { // a blank line
+        if (line.localeCompare('') === 0) { // a blank line
           foundHttpRequestBody = true
           console.debug('Found the blank line before the response body')
           continue
@@ -104,12 +104,12 @@ server.on('connection', function (c) {
         if (binaryModeUrl === "/binary/gif") {
             var b64string = 'R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
             var buf = Buffer.from(b64string, 'base64');
-            c.write('HTTP/1.1 200 OK\r\n')
-            c.write('Date: ' + (new Date()).toString() + '\r\n')
-            c.write('Connection: close\r\n')
-            c.write('Content-Type: image/gif\r\n')
-            c.write('Access-Control-Allow-Origin: *\r\n')
-            c.write('\r\n')
+            c.write('HTTP/1.1 200 OK\n')
+            c.write('Date: ' + (new Date()).toString() + '\n')
+            c.write('Connection: close\n')
+            c.write('Content-Type: image/gif\n')
+            c.write('Access-Control-Allow-Origin: *\n')
+            c.write('\n')
             c.write(buf)
             setTimeout(function () {
                 c.end()
