@@ -87,7 +87,7 @@ server.on('connection', function (c) {
           }
         }
 
-        if (line.localeCompare('') === 0) { // a blank line
+        if (line.localeCompare('\r') === 0) { // a blank line
           foundHttpRequestBody = true
           console.debug('Found the blank line before the response body')
           continue
